@@ -10,20 +10,40 @@ var server = http.createServer(function(req, res){
     //get url and parsed and send the response
     var parsedUrl = url.parse(req.url, true);
     var path = parsedUrl.pathname;
-    var trimPath = path.replace(/^\/+|\/+$/g,'');
+    var requestPath = path.replace(/^\/+|\/+$/g,'');
     var queryStringObject = parsedUrl.query;
     var method = req.method.toLowerCase();
     var headers = req.headers;
     var decoder = new StringDecoder('utf-8');
     var buffer = '';
+
     req.on('data', function(data){
         buffer += decoder.write(data);
     });
     req.on('end', function(){
         buffer += decoder.end();
-        res.end('Hello World');
-        console.log(buffer);
+        var chooseHandler = typeof(router[requestPath]) !== 'undefined' ? router[requestPath] : handlers.notFound;
+
+        var data = {
+            'requestPath' : requestPath,
+            'queryStringObject': queryStringObject,
+            'method': method,
+            'headers': headers,
+            'payload': buffer,
+        };        
         
+        //choose request router handler on the specified router
+        chooseHandler(data, function(statusCode, payload){
+            //use status code
+            statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+            payload = typeof(payload) == 'object' ? payload : {};
+
+            //convert payload to a string_decoder
+            var payloadString = JSON.stringify(payload);
+            res.writeHead(statusCode);
+            res.end(payloadString);
+            console.log(buffer);
+        });
     });
     
 });
@@ -31,3 +51,17 @@ var server = http.createServer(function(req, res){
 server.listen(3000, function(){
     console.log('Listening on port 3000');
 })
+
+var handlers = {}
+
+handlers.sample = function(data, callback){
+//here callback response with http status code , payload
+    callback(406, {'name': 'sample handler'});
+};
+
+handlers.notFound = function(data, callback){
+    callback(404);
+};
+var router = {
+    'sample': handlers.sample
+};
