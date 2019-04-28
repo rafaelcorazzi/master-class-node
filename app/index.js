@@ -40,6 +40,7 @@ var server = http.createServer(function(req, res){
 
             //convert payload to a string_decoder
             var payloadString = JSON.stringify(payload);
+            res.setHeader('Content-Type', 'application/json')
             res.writeHead(statusCode);
             res.end(payloadString);
             console.log(buffer);
@@ -56,7 +57,7 @@ var handlers = {}
 
 handlers.sample = function(data, callback){
 //here callback response with http status code , payload
-    callback(406, {'name': 'sample handler'});
+    callback(201, {'name': 'sample handler'});
 };
 
 handlers.notFound = function(data, callback){
