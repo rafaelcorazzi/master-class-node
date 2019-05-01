@@ -4,10 +4,31 @@ var http = require('http');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config');
-//server shoudl all requests with a string  
+var https = require('https');
+var fs = require('fs');
+//server shoudl all requests with a string
 //start server and listen port
 
-var server = http.createServer(function(req, res){
+var httpServer = http.createServer(function(req, res){
+    unifiedServer(req, res);
+});
+
+httpServer.listen(config.httpPort, function(){
+    console.log(`The server is up and running on port  ${config.httpPort} in ${config.envName} mode.`);
+})
+
+var httpsServerOptions = {
+    'key': fs.readFileSync('./https/key.pem'),
+    'cert': fs.readFileSync('./https/cert.pem')
+};
+var httpsServer = https.createServer(httpsServerOptions, function(req, res){
+    unifiedServer(req, res);
+});
+
+httpsServer.listen(config.httpsPort, function(){
+    console.log(`The server is up and running on port  ${config.httpsPort} in ${config.envName} mode.`);
+})
+var unifiedServer = function(req, res){
     //get url and parsed and send the response
     var parsedUrl = url.parse(req.url, true);
     var path = parsedUrl.pathname;
@@ -31,8 +52,8 @@ var server = http.createServer(function(req, res){
             'method': method,
             'headers': headers,
             'payload': buffer,
-        };        
-        
+        };
+
         //choose request router handler on the specified router
         chooseHandler(data, function(statusCode, payload){
             //use status code
@@ -44,15 +65,12 @@ var server = http.createServer(function(req, res){
             res.setHeader('Content-Type', 'application/json')
             res.writeHead(statusCode);
             res.end(payloadString);
-            console.log(buffer);
+
         });
     });
-    
-});
+}
 
-server.listen(config.port, function(){
-    console.log(`The server is up and running on port  ${config.port} in ${config.envName} mode.`);
-})
+
 
 var handlers = {}
 
