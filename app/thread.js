@@ -7,6 +7,9 @@ function foo() {
   
 function bar() {
       a = a * 2;
+      let b = 12;
+      b = 23;
+      console.log(b);
       return a;
 }
   
